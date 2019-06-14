@@ -1,0 +1,10 @@
+[package]
+name = "blockcar-genesis"
+version = "0.1.0"
+authors = ["PhdTrollSlayer <rodrigomauricio@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+web3 = { git = "https://github.com/tomusdrw/rust-web3" }
+chrono = "0.4.6"
+rustc-hex = "*"
