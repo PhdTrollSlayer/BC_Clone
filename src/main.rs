@@ -1,8 +1,11 @@
+mod contract;
+mod criptografia;
+
+use criptografia::*;
+
 use std::process::exit;
 
 use web3::futures::Future;
-use web3::types::*;
-use web3::contract::Contract;
 
 /* Notas
 # Rodar o client do ethereum
@@ -26,7 +29,7 @@ fn main() {
 
     let u = web3.personal().unlock_account(end_servidor, "", None).wait().unwrap();
     println!("Account {:?}\nUnlocked: {:?}", end_servidor, u);
-    // ********************************************************************************
+    // ************************************************************************
 
     let end_servidor_saldo = web3.eth().balance(end_servidor, None).wait().unwrap();
     let end_veiculo_saldo = web3.eth().balance(end_veiculo, None).wait().unwrap();
@@ -34,18 +37,20 @@ fn main() {
     println!("N1 balance: {:?}", end_servidor_saldo);
     println!("N2 balance: {:?}", end_veiculo_saldo);
 
+    // ***********************************************************************
+    
+    //gerar_credendiais().unwrap();
+    let chave = recuperar_credenciais();
+
+    // ***********************************************************************
+    let y = criptografar(&String::from("vai se fude comunismo"), &chave);
+    let y = des_criptografar(&y, &chave);
+    dbg!(y);
+
+
+
     exit(0);
 
-    // Bytecode do contrato
-    let bytecode = include_str!("../solidity/store.code");
-
-    // Depoly do contrato para a net
-    let contract = Contract::deploy(web3.eth(), include_bytes!("../solidity/store.abi")).unwrap()
-        .confirmations(0)
-        .execute(bytecode, (), end_servidor)
-        .unwrap()
-        .wait()
-        .unwrap();
-
-    println!("{:?}", contract.address());
+    /*
+    */
 }

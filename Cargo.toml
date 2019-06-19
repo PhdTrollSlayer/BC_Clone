@@ -8,3 +8,6 @@ edition = "2018"
 web3 = { git = "https://github.com/tomusdrw/rust-web3" }
 chrono = "0.4.6"
 rustc-hex = "*"
+openssl = "0.10.23"
+base64 = "0.10.1"
+rand = "*"
