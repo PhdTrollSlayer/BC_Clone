@@ -1,2 +1,0 @@
-[{"constant":false,"inputs":[{"name":"a","type":"address"},{"name":"s","type":"string"}],"name":"set_report","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"get_report","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"}]
-

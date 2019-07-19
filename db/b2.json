@@ -1,0 +1,26 @@
+{
+		"nmr": 2,
+		"prev_hash": "0",
+		"this_hash": "6",
+		"reports": [
+			{
+				"id_prestador": "00",
+				"id_veiculo": "1",
+				"timestamp": "1563562327",
+				"chasis": "46548",
+				"km": 40000,
+				"relatorio": "",
+				"assinatura": "444444444"
+			},
+			{
+				"id_prestador": "00",
+				"id_veiculo": "2",
+				"timestamp": "1563562327",
+				"chasis": "46548",
+				"km": 0,
+				"relatorio": "",
+				"assinatura": "444444444"
+			}
+
+		]
+}
