@@ -1,27 +1,33 @@
+#![feature(proc_macro_hygiene, decl_macro)]
 mod blockchain;
 mod criptografia;
 
 use blockchain::*;
 
-/* Notas
-*/
+#[macro_use] extern crate rocket;
+
+use rocket::State;
+use rocket::http::RawStr;
+use rocket::response::content::Json;
 
 #[allow(deprecated, unreachable_code)]
 fn main() {
-
     let mut bc = Blockchain::inicializar_db();
 
-    let r = Report {
-        id_prestador: "1".to_string(),
-        id_veiculo: "2".to_string(),
-        timestamp: "1563799664".to_string(),
-        chasis: "46548".to_string(),
-        km: 100,
-        relatorio: "to".to_string(),
-        assinatura: "".to_string(),
-    };
+    rocket::ignite()
+        .mount("/", routes![consultar_placa])
+        .manage(bc)
+        .launch();
+}
 
-    let v = vec![r];
+#[get("/consulta/<placa>")]
+fn consultar_placa(bc: State<Blockchain>, placa: &RawStr) -> Json<String> {
+    let resultado = bc.consultar_veiuculo(placa);
 
-    bc.inserir_bloco(&v);
+    match resultado {
+        Some(v) => {
+            Json(v.json_data())
+        },
+        None => {Json("{}".to_string())}
+    }
 }

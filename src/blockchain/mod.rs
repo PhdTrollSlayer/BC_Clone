@@ -8,6 +8,8 @@ use std::path::Path;
 
 use openssl::sha;
 
+use json::*;
+
 const DB_PATH: &str = "./blockchain";
 
 #[derive(Debug, Clone)]
@@ -23,23 +25,17 @@ pub struct Report {
 
 impl Report {
     fn json(&self) -> String {
-        format!(r#"{}
-            "id_prestador": "{}",
-            "id_veiculo": "{}",
-            "timestamp": "{}",
-            "chasis": "{}",
-            "km": {},
-            "relatorio": "{}",
-            "assinatura": "{}"
-        {}"#,    "{", 
-                  self.id_prestador, 
-                  self.id_veiculo, 
-                  self.timestamp, 
-                  self.chasis, 
-                  self.km, 
-                  self.relatorio, 
-                  self.assinatura, 
-                  "}")
+        let data = object!{
+                "id_prestador" => self.id_prestador.clone(),
+                "id_veiculo" => self.id_veiculo.clone(),
+                "timestamp" => self.timestamp.clone(),
+                "chasis" => self.chasis.clone(),
+                "km" => self.km.clone(),
+                "relatorio" => self.relatorio.clone(),
+                "assinatura" => self.assinatura.clone()
+        };
+
+        data.dump()
     }
 }
 
@@ -60,8 +56,17 @@ pub struct Blockchain {
 }
 
 impl Blockchain {
-    pub fn inicializar_db() -> Blockchain {
+    pub fn consultar_veiuculo(&self, query: &str) -> Option<Veiculo> {
+        for v in self.db.clone() {
+            if &v.id == query {
+                return Some(v.clone());
+            }
+        }
 
+        None
+    }
+
+    pub fn inicializar_db() -> Blockchain {
         let mut blocos: Vec<Block> = Vec::new();
         
         for entry in fs::read_dir(Path::new(DB_PATH)).unwrap() {
@@ -97,8 +102,6 @@ impl Blockchain {
             blocos.push(block);
 
         }
-
-
 
         let mut bc = Blockchain {
             nmr_ultimo_bloco: 0,
@@ -199,21 +202,11 @@ impl Blockchain {
             this_hash,
             reports: reports.clone(),
         };
+        let mut r: Vec<_> = Vec::new();
 
-        let mut json = String::from("[\n");
-
-        let mut iter = novo_bloco.reports.iter();
-
-        loop {
-            json.push_str(&iter.next().unwrap().json());
-            
-            if iter.clone().next().is_some() {
-                json.push(',')
-            } else {
-                break
-            }
+        for report in novo_bloco.reports.clone() {
+            r.push(report.json());
         }
-        json.push(']');
 
         let s = format!(r#"{}
                             "nmr": {},
@@ -225,7 +218,7 @@ impl Blockchain {
                             novo_bloco.nmr,
                             novo_bloco.prev_hash,
                             novo_bloco.this_hash,
-                            json,
+                            stringify(r),
                             '}');
 
         self.bc.push(novo_bloco.clone());
