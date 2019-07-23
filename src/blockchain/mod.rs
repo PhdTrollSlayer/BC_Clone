@@ -1,6 +1,5 @@
-pub mod veiculo;
-
-use crate::blockchain::veiculo::Veiculo;
+use crate::models::veiculo::Veiculo;
+use crate::models::report::Report;
 
 use std::io::prelude::*;
 use std::fs::{self, File};
@@ -10,49 +9,22 @@ use openssl::sha;
 
 use json::*;
 
-const DB_PATH: &str = "./blockchain";
-
-#[derive(Debug, Clone)]
-pub struct Report {
-    pub id_prestador: String,
-    pub id_veiculo: String,
-    pub timestamp: String,
-    pub chasis: String,
-    pub km: i64,
-    pub relatorio: String,
-    pub assinatura: String,
-}
-
-impl Report {
-    fn json(&self) -> String {
-        let data = object!{
-                "id_prestador" => self.id_prestador.clone(),
-                "id_veiculo" => self.id_veiculo.clone(),
-                "timestamp" => self.timestamp.clone(),
-                "chasis" => self.chasis.clone(),
-                "km" => self.km.clone(),
-                "relatorio" => self.relatorio.clone(),
-                "assinatura" => self.assinatura.clone()
-        };
-
-        data.dump()
-    }
-}
+const BC_PATH: &str = "./blockchain";
 
 #[derive(Debug, Clone)]
 pub struct Block {
-    nmr: i64,
+    nmr:       i64,
     prev_hash: String,
     this_hash: String,
-    reports: Vec<Report>,
+    reports:   Vec<Report>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Blockchain {
-    nmr_ultimo_bloco: i64,
+    nmr_ultimo_bloco:  i64,
     hash_ultimo_bloco: String,
-    db: Vec<Veiculo>,
-    bc: Vec<Block>,
+    db:                Vec<Veiculo>,
+    bc:                Vec<Block>,
 }
 
 impl Blockchain {
@@ -66,10 +38,10 @@ impl Blockchain {
         None
     }
 
-    pub fn inicializar_db() -> Blockchain {
+    pub fn inicializar() -> Blockchain {
         let mut blocos: Vec<Block> = Vec::new();
         
-        for entry in fs::read_dir(Path::new(DB_PATH)).unwrap() {
+        for entry in fs::read_dir(Path::new(BC_PATH)).unwrap() {
             let mut entry = File::open(entry.unwrap().path()).unwrap();
 
             let mut contents = String::new();
@@ -81,19 +53,19 @@ impl Blockchain {
             for x in block["reports"].members() {
                 let y = Report {
                     id_prestador: x["id_prestador"].to_string(),
-                    id_veiculo: x["id_veiculo"].to_string(),
-                    timestamp: x["timestamp"].to_string(),
-                    chasis: x["chasis"].to_string(),
-                    km: x["km"].as_i64().unwrap(),
-                    relatorio: x["relatorio"].to_string(),
-                    assinatura: x["assinatura"].to_string(),
+                    id_veiculo:   x["id_veiculo"].to_string(),
+                    timestamp:    x["timestamp"].to_string(),
+                    chasis:       x["chasis"].to_string(),
+                    km:           x["km"].as_i64().unwrap(),
+                    relatorio:    x["relatorio"].to_string(),
+                    assinatura:   x["assinatura"].to_string(),
                 };
 
                 reports.push(y);
             }
 
             let block = Block {
-                nmr: block["nmr"].as_i64().unwrap(),
+                nmr:       block["nmr"].as_i64().unwrap(),
                 prev_hash: block["prev_hash"].to_string(),
                 this_hash: block["this_hash"].to_string(),
                 reports,
@@ -104,10 +76,10 @@ impl Blockchain {
         }
 
         let mut bc = Blockchain {
-            nmr_ultimo_bloco: 0,
+            nmr_ultimo_bloco:  0,
             hash_ultimo_bloco: String::new(),
-            db: Vec::new(),
-            bc: blocos,
+            db:                Vec::new(),
+            bc:                blocos,
         };
 
         bc.validar_blocos();
@@ -125,7 +97,7 @@ impl Blockchain {
         
     }
 
-    pub fn validar_blocos(&mut self) {
+    fn validar_blocos(&mut self) {
         self.bc.sort_by(|a, b| a.nmr.partial_cmp(&b.nmr).unwrap());
 
         let q = self.bc.get(1..).unwrap().clone();
@@ -145,7 +117,7 @@ impl Blockchain {
 
     }
 
-    pub fn validar_veiculos(&mut self) {
+    fn validar_veiculos(&mut self) {
         let mut v: Vec<Veiculo> = Vec::new();
 
         for b in self.bc.clone() {
@@ -180,14 +152,23 @@ impl Blockchain {
         self.db = v;
     }
 
-    pub fn inserir_bloco(&mut self, reports: &Vec<Report>) {
+    pub fn inserir_report(&mut self, reports: &Vec<Report>) {
         let nmr_novo_bloco = self.nmr_ultimo_bloco + 1;
         let hash_ultimo_bloco = self.hash_ultimo_bloco.clone();
 
         let mut f_string = String::new();
 
         for r in reports {
-            f_string.push_str(&format!("{}{}{}{}{}{}{}", r.id_prestador, r.id_veiculo, r.timestamp, r.chasis, r.km, r.relatorio, r.assinatura));
+            f_string.push_str(
+                &format!("{}{}{}{}{}{}{}{}", 
+                         r.id_prestador, 
+                         r.id_veiculo, 
+                         r.timestamp, 
+                         r.chasis, 
+                         r.km, 
+                         r.relatorio, 
+                         r.assinatura, 
+                         self.hash_ultimo_bloco.clone()));
         }
 
         let mut hasher = sha::Sha256::new();
@@ -197,36 +178,30 @@ impl Blockchain {
         let this_hash = hex::encode(hasher.finish());
 
         let novo_bloco = Block {
-            nmr: nmr_novo_bloco,
+            nmr:       nmr_novo_bloco,
             prev_hash: hash_ultimo_bloco,
             this_hash,
-            reports: reports.clone(),
+            reports:   reports.clone(),
         };
         let mut r: Vec<_> = Vec::new();
 
         for report in novo_bloco.reports.clone() {
-            r.push(report.json());
+            r.push(parse(&report.json_data()).unwrap());
         }
 
-        let s = format!(r#"{}
-                            "nmr": {},
-                            "prev_hash": "{}",
-                            "this_hash": "{}",
-                            "reports": {}
-                            {}"#,
-                            '{',
-                            novo_bloco.nmr,
-                            novo_bloco.prev_hash,
-                            novo_bloco.this_hash,
-                            stringify(r),
-                            '}');
+        let s = object!{
+            "nmr"       => novo_bloco.nmr.clone(),
+            "prev_hash" => novo_bloco.prev_hash.clone(),
+            "this_hash" => novo_bloco.this_hash.clone(),
+            "reports"   => r
+        };
 
         self.bc.push(novo_bloco.clone());
         self.validar_blocos();
         self.validar_veiculos();
         
-        let mut file = File::create(format!("{}/b{}.json", DB_PATH, novo_bloco.nmr)).unwrap();
-        file.write_all(s.as_bytes()).unwrap();
+        let mut file = File::create(format!("{}/b{}.json", BC_PATH, novo_bloco.nmr)).unwrap();
+        file.write_all(s.pretty(4).as_bytes()).unwrap();
 
     }
 

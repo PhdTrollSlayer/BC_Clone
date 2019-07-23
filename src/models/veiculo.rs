@@ -1,12 +1,12 @@
-use crate::blockchain::Report;
+use crate::models::report::Report;
 
 use json::*;
 
 #[derive(Debug, Clone)]
 pub struct Veiculo {
-    pub id: String, // Placa
-    pub chasis: String,
-    pub km_atual: i64,
+    pub id:         String, // Placa
+    pub chasis:     String,
+    pub km_atual:   i64,
     pub relatorios: Vec<Report>
 }
 
@@ -35,14 +35,14 @@ impl Veiculo {
         let mut r: Vec<_> = Vec::new();
 
         for report in self.relatorios.clone() {
-            r.push(parse(&report.json()).unwrap());
+            r.push(parse(&report.json_data()).unwrap());
         }
 
         let data = object!{
-            "id" => self.id.clone(),
-            "chasis" => self.chasis.clone(),
-            "km_atual" => self.km_atual.clone(),
-            "relatorios" => r,
+            "id"            => self.id.clone(),
+            "chasis"        => self.chasis.clone(),
+            "km_atual"      => self.km_atual.clone(),
+            "relatorios"    => r,
         };
 
         data.dump()
