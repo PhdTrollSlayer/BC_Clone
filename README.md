@@ -4,11 +4,10 @@
 
 ##### Consulta de Veiculos
 * GET
-* ´´´/consulta/<placa>´´´
+* ```/consulta/<placa>```
 * Retorno
-	* 
-	´´´
-	{
+```json
+{
   "id": "1",
   "chasis": "46548",
   "km_atual": 0,
@@ -33,7 +32,7 @@
     }
   ]
 }
-	´´´
+```
 
 ### TODO
 - [x] Blockchain funcional
