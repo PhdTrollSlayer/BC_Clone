@@ -4,10 +4,13 @@ use crate::models::report::Report;
 use std::io::prelude::*;
 use std::fs::{self, File};
 use std::path::Path;
+use std::time::{Duration, SystemTime};
 
 use openssl::sha;
 
 use serde::{Deserialize, Serialize};
+
+use chrono::prelude::*;
 
 const BC_PATH: &str = "./blockchain";
 
@@ -21,6 +24,9 @@ pub struct Block {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Blockchain {
+    intervalo_att:     Duration,
+    ultima_att:        SystemTime,
+    fila:              Vec<Report>,
     nmr_ultimo_bloco:  i64,
     hash_ultimo_bloco: String,
     db:                Vec<Veiculo>,
@@ -28,6 +34,16 @@ pub struct Blockchain {
 }
 
 impl Blockchain {
+    pub fn inserir_report(&mut self, r: Report) {
+        self.fila.push(r);
+
+        if self.ultima_att.elapsed().unwrap() >= self.intervalo_att {
+            self.push_block();
+
+            self.ultima_att = SystemTime::now();
+        }
+    }
+
     pub fn consultar_veiuculo(&self, query: &str) -> Option<Veiculo> {
         for v in self.db.clone() {
             if &v.id == query {
@@ -76,6 +92,9 @@ impl Blockchain {
         }
 
         let mut bc = Blockchain {
+            intervalo_att:     Duration::new(15, 0),
+            ultima_att:        SystemTime::now(),
+            fila:              Vec::new(),
             nmr_ultimo_bloco:  0,
             hash_ultimo_bloco: String::new(),
             db:                Vec::new(),
@@ -152,22 +171,20 @@ impl Blockchain {
         self.db = v;
     }
 
-    pub fn inserir_report(&mut self, reports: &Vec<Report>) {
+    pub fn push_block(&mut self) {
         let nmr_novo_bloco = self.nmr_ultimo_bloco + 1;
         let hash_ultimo_bloco = self.hash_ultimo_bloco.clone();
 
         let mut f_string = String::new();
 
-        for r in reports {
+        for r in self.fila.iter_mut() {
             f_string.push_str(
-                &format!("{}{}{}{}{}{}{}{}", 
+                &format!("{}{}{}{}{}{}", 
                          r.id_prestador, 
                          r.id_veiculo, 
                          r.timestamp, 
-                         r.chasis, 
                          r.km, 
                          r.relatorio, 
-                         r.assinatura, 
                          self.hash_ultimo_bloco.clone()));
         }
 
@@ -181,7 +198,7 @@ impl Blockchain {
             nmr:       nmr_novo_bloco,
             prev_hash: hash_ultimo_bloco,
             this_hash,
-            reports:   reports.clone(),
+            reports:   self.fila.clone(),
         };
         let mut r: Vec<_> = Vec::new();
 

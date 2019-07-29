@@ -37,7 +37,7 @@
 ### TODO
 - [x] Blockchain funcional
 - [x] Consultar veiculos
-- [ ] Submeter relatórios
+- [x] Submeter relatórios
 - [ ] Preparar API
 - [ ] Site
 	- [ ] Login

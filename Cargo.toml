@@ -5,7 +5,7 @@ authors = ["PhdTrollSlayer <rodrigomauricio@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-chrono = "0.4.6"
+chrono = { version = "0.4", features = ["serde"] }
 openssl = "0.10.23"
 base64 = "*"
 rand = "*"
