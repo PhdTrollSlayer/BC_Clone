@@ -7,11 +7,11 @@ use std::path::Path;
 
 use openssl::sha;
 
-use json::*;
+use serde::{Deserialize, Serialize};
 
 const BC_PATH: &str = "./blockchain";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
     nmr:       i64,
     prev_hash: String,
@@ -19,7 +19,7 @@ pub struct Block {
     reports:   Vec<Report>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Blockchain {
     nmr_ultimo_bloco:  i64,
     hash_ultimo_bloco: String,
@@ -186,22 +186,17 @@ impl Blockchain {
         let mut r: Vec<_> = Vec::new();
 
         for report in novo_bloco.reports.clone() {
-            r.push(parse(&report.json_data()).unwrap());
+            r.push(report.clone());
         }
 
-        let s = object!{
-            "nmr"       => novo_bloco.nmr.clone(),
-            "prev_hash" => novo_bloco.prev_hash.clone(),
-            "this_hash" => novo_bloco.this_hash.clone(),
-            "reports"   => r
-        };
+        let s = serde_json::to_string(&novo_bloco).unwrap();
 
         self.bc.push(novo_bloco.clone());
         self.validar_blocos();
         self.validar_veiculos();
         
         let mut file = File::create(format!("{}/b{}.json", BC_PATH, novo_bloco.nmr)).unwrap();
-        file.write_all(s.pretty(4).as_bytes()).unwrap();
+        file.write_all(s.as_bytes()).unwrap();
 
     }
 

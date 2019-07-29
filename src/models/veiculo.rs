@@ -1,8 +1,8 @@
 use crate::models::report::Report;
 
-use json::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Veiculo {
     pub id:         String, // Placa
     pub chasis:     String,
@@ -33,21 +33,4 @@ impl Veiculo {
         println!("Sucesso na validação do veiculo!");
     }
 
-    pub fn json_data(&self) -> String {
-        let mut r: Vec<_> = Vec::new();
-
-        for report in self.relatorios.clone() {
-            r.push(parse(&report.json_data()).unwrap());
-        }
-
-        let data = object!{
-            "id"            => self.id.clone(),
-            "chasis"        => self.chasis.clone(),
-            "km_atual"      => self.km_atual.clone(),
-            "relatorios"    => r,
-        };
-
-        data.dump()
-
-    }
 }
