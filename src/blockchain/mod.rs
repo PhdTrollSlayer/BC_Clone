@@ -1,5 +1,6 @@
 use crate::models::veiculo::Veiculo;
 use crate::models::report::Report;
+use crate::models::prestador::Prestador;
 
 use std::io::prelude::*;
 use std::fs::{self, File};
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use chrono::prelude::*;
 
 const BC_PATH: &str = "./blockchain";
+const DB_PATH: &str = "./db";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
@@ -29,11 +31,42 @@ pub struct Blockchain {
     fila:              Vec<Report>,
     nmr_ultimo_bloco:  i64,
     hash_ultimo_bloco: String,
-    db:                Vec<Veiculo>,
+    prestador_db:      Vec<Prestador>,
+    veiculo_db:        Vec<Veiculo>,
     bc:                Vec<Block>,
 }
 
 impl Blockchain {
+    pub fn confirm_api_key(&self, q: &str) -> Result<(String),(())> {
+        for p in self.prestador_db.iter() {
+            if q == p.api_key {
+                return Ok(serde_json::to_string(&p).unwrap())
+            }
+        }
+
+        Err(())
+    }
+
+    pub fn get_all_prestadores(&self) -> String {
+        let mut p = self.prestador_db.clone();
+
+        for i in p.iter_mut() {
+            i.veiculos_presentes = Vec::new();
+        }
+
+        serde_json::to_string(&p).unwrap()
+    }
+
+    pub fn get_all_veiculos(&self) -> String {
+        let mut v = self.veiculo_db.clone();
+
+        for i in v.iter_mut() {
+            i.relatorios = Vec::new();
+        }
+
+        serde_json::to_string(&v).unwrap()
+    }
+
     pub fn inserir_report(&mut self, r: Report) {
         self.fila.push(r);
 
@@ -45,7 +78,7 @@ impl Blockchain {
     }
 
     pub fn consultar_veiuculo(&self, query: &str) -> Option<Veiculo> {
-        for v in self.db.clone() {
+        for v in self.veiculo_db.clone() {
             if &v.id == query {
                 return Some(v.clone());
             }
@@ -90,6 +123,37 @@ impl Blockchain {
             blocos.push(block);
 
         }
+        
+        let mut prestadoras: Vec<Prestador> = Vec::new();
+        let mut i = 0;
+
+        for entry in fs::read_dir(Path::new(DB_PATH)).unwrap() {
+            let mut entry = File::open(entry.unwrap().path()).unwrap();
+
+            let mut contents = String::new();
+            entry.read_to_string(&mut contents).unwrap();
+            let prestadora = json::parse(&contents).unwrap();
+
+            let mut v_presentes: Vec<Veiculo> = Vec::new();
+
+            for x in prestadora["veiculos_presentes"].members() {
+                let x: Veiculo = serde_json::from_str(&x.dump()).unwrap();
+                v_presentes.push(x);
+            }
+
+            prestadoras.push(
+                Prestador {
+                    nome: prestadora["nome"].to_string(),
+                    api_key: prestadora["api_key"].to_string(),
+                    veiculos_presentes: v_presentes,
+                }
+            );
+
+            i += 1;
+
+        }
+
+        println!("{} prestadoras de serviço cadastradas!", i);
 
         let mut bc = Blockchain {
             intervalo_att:     Duration::new(15, 0),
@@ -97,7 +161,8 @@ impl Blockchain {
             fila:              Vec::new(),
             nmr_ultimo_bloco:  0,
             hash_ultimo_bloco: String::new(),
-            db:                Vec::new(),
+            prestador_db:      prestadoras,
+            veiculo_db:        Vec::new(),
             bc:                blocos,
         };
 
@@ -113,6 +178,18 @@ impl Blockchain {
         bc.hash_ultimo_bloco = hash_last_block;
 
         bc
+        
+    }
+
+    pub fn cadastrar_prestadora(&mut self, nome: &str) {
+        let p = Prestador::new(nome);
+
+        self.prestador_db.push(p.clone());
+
+        let s = serde_json::to_string(&p).unwrap();
+
+        let mut file = File::create(format!("{}/b{}.json", DB_PATH, p.api_key)).unwrap();
+        file.write_all(s.as_bytes()).unwrap();
         
     }
 
@@ -168,7 +245,7 @@ impl Blockchain {
             x.verificar();
         }
 
-        self.db = v;
+        self.veiculo_db = v;
     }
 
     pub fn push_block(&mut self) {
