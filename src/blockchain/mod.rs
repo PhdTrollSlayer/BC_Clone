@@ -11,8 +11,6 @@ use openssl::sha;
 
 use serde::{Deserialize, Serialize};
 
-use chrono::prelude::*;
-
 const BC_PATH: &str = "./blockchain";
 const DB_PATH: &str = "./db";
 
@@ -107,7 +105,6 @@ impl Blockchain {
                     chasis:       x["chasis"].to_string(),
                     km:           x["km"].as_i64().unwrap(),
                     relatorio:    x["relatorio"].to_string(),
-                    assinatura:   x["assinatura"].to_string(),
                 };
 
                 reports.push(y);
@@ -144,6 +141,7 @@ impl Blockchain {
             prestadoras.push(
                 Prestador {
                     nome: prestadora["nome"].to_string(),
+                    id: prestadora["id"].to_string(),
                     api_key: prestadora["api_key"].to_string(),
                     veiculos_presentes: v_presentes,
                 }

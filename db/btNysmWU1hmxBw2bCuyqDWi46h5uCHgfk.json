@@ -1,1 +1,4 @@
-{"nome":"BlockCar","api_key":"tNysmWU1hmxBw2bCuyqDWi46h5uCHgfk","veiculos_presentes":[]}
+{"nome":"BlockCar","id": "0000000001","api_key":"tNysmWU1hmxBw2bCuyqDWi46h5uCHgfk","veiculos_presentes":[
+{"id":"1","chasis":"46548","km_atual":40000,"relatorios":[]},
+{"id":"2","chasis":"46548","km_atual":40000,"relatorios":[]}
+]}

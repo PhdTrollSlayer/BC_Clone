@@ -9,8 +9,7 @@
 				"timestamp": "1563562327",
 				"chasis": "46548",
 				"km": 40000,
-				"relatorio": "",
-				"assinatura": "444444444"
+				"relatorio": ""
 			},
 			{
 				"id_prestador": "00",
@@ -18,8 +17,7 @@
 				"timestamp": "1563562327",
 				"chasis": "46548",
 				"km": 0,
-				"relatorio": "",
-				"assinatura": "444444444"
+				"relatorio": ""
 			}
 
 		]

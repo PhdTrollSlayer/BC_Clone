@@ -5,7 +5,6 @@ mod models;
 
 use blockchain::*;
 use models::report::*;
-use models::prestador::Prestador;
 
 use std::sync::{RwLock};
 
@@ -21,16 +20,6 @@ use rocket::http::Status;
 fn main() {
     let mut bc = Blockchain::inicializar();
 
-    let _r = Report {
-        id_prestador: "89".to_string(),
-        id_veiculo: "3213".to_string(),
-        timestamp: "12312312".to_string(),
-        chasis: "123123".to_string(),
-        km: 0,
-        relatorio: "".to_string(),
-        assinatura: "123".to_string(),
-    };
-    
     rocket::ignite()
            .mount("/", routes![
                consultar_placa, 
@@ -44,8 +33,9 @@ fn main() {
 }
 
 #[get("/login/<api_key>")]
-// Embalar o Json em um HTTPStatus
+// TODO: Embalar o Json em um HTTPStatus
 fn login(bc: State<RwLock<Blockchain>>, api_key: &RawStr) -> Json<String> {
+    // Confirma API key e retorna a struct Prestador procurada
     match bc.read().unwrap().confirm_api_key(&api_key) {
         Ok(s) => {
             Json(s)
@@ -77,15 +67,14 @@ fn submeter_relatorio(bc: State<RwLock<Blockchain>>, data: String) -> status::Cu
         Ok(s) => {
             let mut x = bc.write().unwrap();
             x.inserir_report(s);
-
+            
+            return status::Custom(Status::Ok, "Ok: #001 = Relatório submetido!".to_string());
+ 
         }
         Err(_) => {
             return status::Custom(Status::BadRequest, "Err: #003 = Formatação do relatório inválida!".to_string());
         }
     }
-
-    status::Custom(Status::BadRequest, "Err: #001 Requisição mal feita!".to_string())
-
 }
 
 #[get("/consulta/<placa>")]
