@@ -65,7 +65,25 @@ impl Blockchain {
         serde_json::to_string(&v).unwrap()
     }
 
-    pub fn inserir_report(&mut self, r: Report) {
+    pub fn inserir_report(&mut self, r: Report) -> Result<(()), String>{
+        let v = self.consultar_veiuculo(&r.id_veiculo);
+
+        match v {
+            Some(vei) => {
+                let mut vei = vei.clone();
+                vei.relatorios.push(r.clone());
+                let check = vei.verificar();
+
+                match check {
+                    Ok(()) => {},
+                    Err(e) => {
+                        return Err(e)
+                    }
+                }
+            }
+            None => {}
+        }
+
         self.fila.push(r);
 
         if self.ultima_att.elapsed().unwrap() >= self.intervalo_att {
@@ -73,6 +91,8 @@ impl Blockchain {
 
             self.ultima_att = SystemTime::now();
         }
+
+        Ok(())
     }
 
     pub fn consultar_veiuculo(&self, query: &str) -> Option<Veiculo> {
@@ -240,7 +260,7 @@ impl Blockchain {
         }
 
         for x in v.iter_mut() {
-            x.verificar();
+            x.verificar().unwrap();
         }
 
         self.veiculo_db = v;

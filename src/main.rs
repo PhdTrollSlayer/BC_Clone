@@ -18,7 +18,7 @@ use rocket::http::Status;
 
 #[allow(deprecated, unreachable_code)]
 fn main() {
-    let mut bc = Blockchain::inicializar();
+    let bc = Blockchain::inicializar();
 
     rocket::ignite()
            .mount("/", routes![
@@ -66,9 +66,11 @@ fn submeter_relatorio(bc: State<RwLock<Blockchain>>, data: String) -> status::Cu
     match pr {
         Ok(s) => {
             let mut x = bc.write().unwrap();
-            x.inserir_report(s);
-            
-            return status::Custom(Status::Ok, "Ok: #001 = Relatório submetido!".to_string());
+            match x.inserir_report(s) {
+                Ok(()) => return status::Custom(Status::Ok, "Ok: #001 = Relatório submetido!".to_string()),
+
+                Err(e) => return status::Custom(Status::BadRequest, format!("Err: #005 = {}", e))
+            }
  
         }
         Err(_) => {
