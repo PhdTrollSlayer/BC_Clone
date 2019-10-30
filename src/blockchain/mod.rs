@@ -148,7 +148,7 @@ impl Blockchain {
             let mut entry = File::open(entry.unwrap().path()).unwrap();
 
             let mut contents = String::new();
-            entry.read_to_string(&mut contents).unwrap();
+            entry.read_to_string(&mut contents).expect("Erro no parsing da entrada no DB de prestadoras");
             let prestadora = json::parse(&contents).unwrap();
 
             let mut v_presentes: Vec<Veiculo> = Vec::new();
