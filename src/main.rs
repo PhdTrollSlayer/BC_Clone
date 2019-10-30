@@ -6,12 +6,14 @@ mod models;
 use blockchain::*;
 use models::report::*;
 
+use std::env;
 use std::io::prelude::*;
 use std::sync::RwLock;
 
 #[macro_use]
 extern crate rocket;
 
+use rocket::config::{Config, Environment};
 use rocket::http::RawStr;
 use rocket::http::Status;
 use rocket::response::content::Json;
@@ -22,7 +24,14 @@ use rocket::{Data, State};
 fn main() {
     let bc = Blockchain::inicializar();
 
-    rocket::ignite()
+    let port: u16 = env::var("PORT").unwrap().parse().unwrap();
+
+    let config = Config::build(Environment::Staging)
+        .port(port)
+        .finalize()
+        .unwrap();
+
+    rocket::custom(config)
         .mount(
             "/",
             routes![
